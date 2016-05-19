@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+   <title>Traveling Moon</title>
+
+   <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+   <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+
+   <style>
+      html, body {
+         width: 100%;
+         height: 100%;
+         background-color: #000000;
+      }
+
+      html {
+         -webkit-box-sizing: border-box; 
+         -moz-box-sizing: border-box;     
+         box-sizing: border-box; 
+         border: 0;
+         margin: 0;
+         padding: 0;
+         font-size: 100%;
+      }
+
+      *, *:before, *:after {
+         -webkit-box-sizing: inherit;
+         -moz-box-sizing: inherit;
+         box-sizing: inherit;
+      }
+
+      .moon, #moon {
+         width:  20vw;
+         height: 20vw;
+
+         max-width: 20vh;
+         max-height: 20vh;
+      }
+
+      .moon{
+         position: absolute;
+         right: 0;
+         bottom: 0;
+
+         visibility: hidden;
+      }
+   </style>
+
+</head>
+<body>
+
+   <div class="img moon" id="moon-frame">
+      <!-- Image Attribution:
+           © Nevit Dilmen [CC BY-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0) or GFDL (http://www.gnu.org/copyleft/fdl.html)], via Wikimedia Commons
+      -->
+      <img id="moon" alt="moon" itemprop="contentUrl" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Moon_0063_Nevit.svg/241px-Moon_0063_Nevit.svg.png"/>
+   </div>
+
+   <script>
+      /* 
+         This script sets and moves the moon image based on window size.
+      */
+      var range = {}; /* in pixels */
+      range.min = 400; 
+      range.max = 800;
+      range.diff = range.max - range.min;
+
+      var positionMoon = function() {
+
+         var win = {
+            width: window.innerWidth,
+            height: window.innerHeight
+         };
+
+         var x, y;
+         var moon = { 
+            dimension: {},   /* moon's width/height and rounded up size */
+            style: {}, /* style values to be assigned to the parent div */
+            x: {},   /* horizontal placement from the right - in pixels */
+            y: {}    /*  vertical placement from the bottom - in pixels */
+         };
+         var scrollbar = 20; /* width in pixels */
+
+         moon.dimension.actual = (win.width < win.height) ? (win.width * 0.22) : (win.height * 0.22);  /* smaller of 22vw vs 22vh */
+         moon.dimension.ceil = Math.ceil(moon.dimension.actual);
+
+         function temp(dimension) {
+            if (dimension < range.min) { return 0 };
+            if (dimension > range.max) { return 1 };
+            return (dimension - range.min)/range.diff;
+         }
+
+         /* win.temp values are linearly scaled 
+            between 0 and 100 */
+         win.temp = { 
+            width: temp(win.width, 'x'),
+            height: temp(win.height, 'y')
+         }
+
+         /* range.percent is the aggregate percent of 
+            the total travel range */
+         range.percent = (win.temp.width + win.temp.height) / 2;
+
+         /* logPercent is where the mathemagic happens.
+            For the horizontal axis, the linear percentage is 
+            recalculated as a logarithmic value between 0-100.
+            For the vertical axis, the linear percentage is flipped,
+            then recalculated as a logarithmic value, and then
+            flipped back to the proper orientation */
+         function logPercent(axis) {
+            var linear = range.percent * 10;
+            if ( axis === 'y' ) { linear = 10 - linear };
+            var pow = Math.pow(Math.pow(linear, 2) / 10, 2);
+            if ( axis === 'y' ) { pow = 100 - pow };
+            return pow;
+         }
+
+         function percentToPixels(percent, windowDimension, axis) {
+            var workingDimension = windowDimension - moon.dimension.ceil;
+            return Math.round(percent * workingDimension / 100);
+         }
+
+         moon.x.percent = logPercent('x');
+         moon.y.percent = logPercent('y');
+
+         x = percentToPixels(moon.x.percent, win.width, 'x');
+         y = percentToPixels(moon.y.percent, win.height, 'y');
+
+         moon.style = document.getElementById("moon-frame").style;
+
+         moon.style.position = 'absolute';
+         moon.style.right = x + 'px';
+         moon.style.bottom = y + 'px';
+         moon.style.visibility = 'visible';
+
+      }
+
+      positionMoon();
+
+      window.onresize = function(e) { positionMoon() }
+
+   </script>
+</body>
+</html>
